@@ -1,6 +1,4 @@
-#include "Enum.h"
 #include "Header.h"
-#include "Struct.h"
 
 /*
     콘솔 커서 위치 이동 함수
@@ -101,7 +99,7 @@ int mainLogin()
         }
         else if (input[0] == '2')
         {
-            // signUp();
+            signUp();
         }
         else if (input[0] == '3')
         {
@@ -220,15 +218,15 @@ int userMenu()
 
         if (input[0] == '1')
         {
-            // handleBorrow();
+            handleBorrow();
         }
         else if (input[0] == '2')
         {
-            // handleReturn();
+            handleReturn();
         }
         else if (input[0] == '3')
         {
-            // showBookList();
+            showBookList();
         }
         else if (input[0] == '4')
         {
@@ -236,7 +234,7 @@ int userMenu()
         }
         else if (input[0] == '5')
         {
-            // viewBorrowHistory();
+            viewBorrowHistory();
         }
         else if (input[0] == '6')
         {
@@ -295,15 +293,15 @@ int adminMenu()
 
         if (input[0] == '1')
         {
-            // addBook();
+            addBook();
         }
         else if (input[0] == '2')
         {
-            // removeBook();
+            removeBook();
         }
         else if (input[0] == '3')
         {
-            // viewBorrowRecords();
+            viewBorrowRecords();
         }
         else if (input[0] == '4')
         {
@@ -315,9 +313,9 @@ int adminMenu()
         }
         else
         {
-            gotoxy(43, 22); setColor(WHITE);
+            gotoxy(43, 22); setColor(RED);
             printf("잘못된 입력입니다. 다시 입력해주세요.");
-            setColor(RED);
+            setColor(WHITE);
             gotoxy(43, 20); system("pause");
         }
     }
