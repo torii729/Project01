@@ -232,7 +232,7 @@ int userMenu()
         }
         else if (input[0] == '4')
         {
-            // searchBook();
+            searchBook();
         }
         else if (input[0] == '5')
         {

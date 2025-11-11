@@ -59,5 +59,13 @@ int adminlogin(); // 관리자 로그인 기능 함수
 // void signUp(); // 회원가입 기능 함수
 // void signFix(); // 회원 수정 함수
 
+/*
+    사용자 주요 기능
+*/
+void searchBook(); // 도서 검색
+
+/*
+    관리자 주요 기능
+*/
 // void addBook(); // 도서 등록
 // void removeBook(); // 도서 삭제
