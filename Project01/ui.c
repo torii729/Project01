@@ -69,7 +69,7 @@ void drawMainMenu()
 
     setColor(DarkGreen); drawBox(77, 1, 11, 3, "1| 로그인");
     setColor(darkSkyBlue); drawBox(77, 4, 11, 3, "2| 가입  ");
-    setColor(DarkYellow); drawBox(77, 7, 11, 3, "3| 수정  ");
+    setColor(DarkYellow); drawBox(77, 7, 11, 3, "3| 관리  ");
     setColor(RED); drawBox(77, 10, 11, 3, "4| 종료  ");
 
     setColor(WHITE);
@@ -203,13 +203,14 @@ int userMenu()
         gotoxy(32, 11); printf("I. 사용자");
         gotoxy(31, 12); printf("──────────────────────────────────");
 
-        gotoxy(42, 14); printf("1. 도서 대출");
-        gotoxy(42, 15); printf("2. 도서 반납");
-        gotoxy(42, 16); printf("3. 도서 목록");
-        gotoxy(42, 17); printf("4. 도서 검색");
-        gotoxy(42, 18); printf("5. 대출 내역");
-
-        setColor(RED);  gotoxy(42, 20); printf("6. 로그아웃");
+        gotoxy(34, 15); printf("1. 도서 대출");
+        gotoxy(34, 16); printf("2. 도서 반납");
+        gotoxy(34, 17); printf("3. 도서 목록");
+        gotoxy(34, 18); printf("4. 도서 검색");
+        gotoxy(48, 15); printf("5. 대출 내역");
+        gotoxy(48, 16); printf("6. 회원 수정");
+        gotoxy(48, 17); printf("7. 회원 탈퇴");
+        setColor(RED);  gotoxy(48, 18); printf("8. 로그아웃");
 
         setColor(WHITE);  gotoxy(73, 20); printf("──────────────────────────────");
         gotoxy(31, 22); printf("──────────────────────────────────");
@@ -238,13 +239,21 @@ int userMenu()
         }
         else if (input[0] == '6')
         {
+            // userFix();
+        }
+        else if (input[0] == '7')
+        {
+            // u_removeUser();
+        }
+        else if (input[0] == '8')
+        {
             return 0;
         }
         else
         {
-            gotoxy(43, 22); setColor(12);
+            gotoxy(43, 22); setColor(RED);
             printf("잘못된 입력입니다. 다시 입력해주세요.");
-            setColor(7);
+            setColor(WHITE);
             gotoxy(43, 20); system("pause");
         }
     }
@@ -279,12 +288,12 @@ int adminMenu()
         gotoxy(32, 11); printf("II. 관리자");
         gotoxy(31, 12); printf("──────────────────────────────────");
 
-        gotoxy(42, 14); printf("1. 도서 등록");
-        gotoxy(42, 15); printf("2. 도서 삭제");
-        gotoxy(42, 16); printf("3. 대출 현황");
-        gotoxy(42, 17); printf("4. 회원 관리");
-
-        setColor(RED);  gotoxy(42, 19); printf("5. 로그아웃");
+        gotoxy(34, 16); printf("1. 도서 등록");
+        gotoxy(34, 17); printf("2. 도서 삭제");
+        gotoxy(34, 18); printf("3. 대출 현황");
+        gotoxy(48, 16); printf("4. 회원 조회");
+        gotoxy(48, 17); printf("5. 회원 삭제");
+        setColor(RED);  gotoxy(48, 18); printf("6. 로그아웃");
 
         setColor(WHITE);  gotoxy(73, 20); printf("──────────────────────────────");
         gotoxy(31, 22); printf("──────────────────────────────────");
@@ -305,9 +314,13 @@ int adminMenu()
         }
         else if (input[0] == '4')
         {
-            // userFix();
+            // viewUser();
         }
         else if (input[0] == '5')
+        {
+            // m_removeUser();
+        }
+        else if (input[0] == '6')
         {
             return 0;
         }

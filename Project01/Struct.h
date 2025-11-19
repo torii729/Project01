@@ -61,7 +61,8 @@ int adminMenu(); // 로그인 후 "관리자" 메인 메뉴 함수
 int login(); // 로그인 기능 함수
 int adminlogin(); // 관리자 로그인 기능 함수
 void signUp(); // 회원가입 기능 함수
-// void signFix(); // 회원 수정 함수
+// void userFix(); // 회원 수정 함수
+// void u_removeUser(); // 회원 탈퇴(사용자)
 
 /*
     사용자 주요 기능
@@ -79,4 +80,4 @@ void addBook(); // 도서 등록
 void removeBook(); // 도서 삭제
 void viewBorrowRecords(); // 대출/연체 내역 조회
 // void viewUser(); // 회원 조회
-// void removeUser(); // 회원 삭제
+// void m_removeUser(); // 회원 삭제(관리자)
