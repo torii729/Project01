@@ -69,8 +69,7 @@ void drawMainMenu()
 
     setColor(DarkGreen); drawBox(77, 1, 11, 3, "1| 로그인");
     setColor(darkSkyBlue); drawBox(77, 4, 11, 3, "2| 가입  ");
-    setColor(DarkYellow); drawBox(77, 7, 11, 3, "3| 관리  ");
-    setColor(RED); drawBox(77, 10, 11, 3, "4| 종료  ");
+    setColor(RED); drawBox(77, 7, 11, 3, "3| 종료  ");
 
     setColor(WHITE);
     drawBox(36, 1, 42, 28, "");
@@ -102,10 +101,6 @@ int mainLogin()
             signUp();
         }
         else if (input[0] == '3')
-        {
-            // signFix();
-        }
-        else if (input[0] == '4')
         {
             return 0;
         }
@@ -189,8 +184,7 @@ int userMenu()
         drawBox(67, 1, 42, 28, "");
         setColor(DarkGreen); drawBox(16, 1, 11, 3, "");
         setColor(darkSkyBlue); drawBox(16, 4, 11, 3, "");
-        setColor(DarkYellow); drawBox(16, 7, 11, 3, "");
-        setColor(RED); drawBox(16, 10, 11, 3, "");
+        setColor(RED); drawBox(16, 7, 11, 3, "");
         setColor(WHITE);
         drawBox(26, 1, 42, 28, "");
         drawBox(31, 3, 34, 3, "차례"); // 전체 메인 박스
@@ -205,12 +199,10 @@ int userMenu()
 
         gotoxy(34, 15); printf("1. 도서 대출");
         gotoxy(34, 16); printf("2. 도서 반납");
-        gotoxy(34, 17); printf("3. 도서 목록");
-        gotoxy(34, 18); printf("4. 도서 검색");
-        gotoxy(48, 15); printf("5. 대출 내역");
-        gotoxy(48, 16); printf("6. 회원 수정");
-        gotoxy(48, 17); printf("7. 회원 탈퇴");
-        setColor(RED);  gotoxy(48, 18); printf("8. 로그아웃");
+        gotoxy(34, 17); printf("3. 대출 내역");
+        gotoxy(48, 15); printf("4. 회원 수정");
+        gotoxy(48, 16); printf("5. 회원 탈퇴");
+        setColor(RED);  gotoxy(48, 17); printf("6. 로그아웃");
 
         setColor(WHITE);  gotoxy(73, 20); printf("──────────────────────────────");
         gotoxy(31, 22); printf("──────────────────────────────────");
@@ -219,7 +211,7 @@ int userMenu()
 
         if (input[0] == '1')
         {
-            handleBorrow();
+            handleBorrowSearch();
         }
         else if (input[0] == '2')
         {
@@ -227,34 +219,26 @@ int userMenu()
         }
         else if (input[0] == '3')
         {
-            showBookList();
+            viewBorrowHistory();
         }
         else if (input[0] == '4')
         {
-            searchBook();
+            userFix();
         }
         else if (input[0] == '5')
         {
-            viewBorrowHistory();
-        }
-        else if (input[0] == '6')
-        {
-            // userFix();
-        }
-        else if (input[0] == '7')
-        {
             // u_removeUser();
         }
-        else if (input[0] == '8')
+        else if (input[0] == '6')
         {
             return 0;
         }
         else
         {
-            gotoxy(43, 22); setColor(RED);
+            gotoxy(74, 21); setColor(RED);
             printf("잘못된 입력입니다. 다시 입력해주세요.");
             setColor(WHITE);
-            gotoxy(43, 20); system("pause");
+            gotoxy(74, 22); system("pause");
         }
     }
 }
@@ -274,8 +258,7 @@ int adminMenu()
         drawBox(67, 1, 42, 28, "");
         setColor(DarkGreen); drawBox(16, 1, 11, 3, "");
         setColor(darkSkyBlue); drawBox(16, 4, 11, 3, "");
-        setColor(DarkYellow); drawBox(16, 7, 11, 3, "");
-        setColor(RED); drawBox(16, 10, 11, 3, "");
+        setColor(RED); drawBox(16, 7, 11, 3, "");
         setColor(WHITE);
         drawBox(26, 1, 42, 28, "");
         drawBox(31, 3, 34, 3, "차례"); // 전체 메인 박스
@@ -326,10 +309,10 @@ int adminMenu()
         }
         else
         {
-            gotoxy(43, 22); setColor(RED);
+            gotoxy(74, 21); setColor(RED);
             printf("잘못된 입력입니다. 다시 입력해주세요.");
             setColor(WHITE);
-            gotoxy(43, 20); system("pause");
+            gotoxy(74, 22); system("pause");
         }
     }
 }

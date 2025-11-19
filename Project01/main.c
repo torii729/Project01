@@ -16,28 +16,16 @@ int main()
 {
     Borrow list[1000] = { 0 };
     Borrow null = { 0 };
-    int borrowCount = manageBorrowFile(list, null, 0, 0); // 전체 대출 목록 불러오기
+    int borrowCount = manageBorrowFile(list, null, 0, 0);
 
-    getDate(0); // 오늘 날짜 (year, month, day)
+    getDate(0);
 
-    for (int i = 0; i < borrowCount; i++)
-    {
-        if (list[i].state == 1) // 대출 중이면
-        {
-            // 반납 예정일이 오늘 날짜보다 앞서는 경우에 연체로(state를 2로) 변경하는 조건문
-            if (list[i].returnYear < year
-                || (list[i].returnYear == year && list[i].returnMonth < month)
-                || (list[i].returnYear == year && list[i].returnMonth == month && list[i].returnDay < day))
-            {
-                list[i].state = 2; // 연체로 변경
-            }
-        }
-    }
-    manageBorrowFile(list, null, 2, borrowCount); // 파일 덮어쓰기 저장
+    // 연체 여부는 목록 출력이나 반납 처리할 때 날짜 비교로만 판단
 
     mainLogin();
     return 0;
 }
+
 
 /*
     날짜 계산

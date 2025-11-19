@@ -7,11 +7,106 @@
 #define RIGHT 77
 
 /*
+    비교 함수 (대출 기록 배열 borrowList를 정렬하는 부분)
+*/
+int compareBorrowRecords(const void* a, const void* b)
+{
+    const Borrow* A = (const Borrow*)a;
+    const Borrow* B = (const Borrow*)b;
+
+    int overA = 0;
+    int overB = 0;
+
+    // 대출중인 기록만 날짜로 연체 대출중 여부 판정
+    if (A->state == 1)
+    {
+        if (isBeforeDate(A->returnYear, A->returnMonth, A->returnDay, year, month, day))
+        {
+            overA = 1;
+        }
+    }
+    if (B->state == 1)
+    {
+        if (isBeforeDate(B->returnYear, B->returnMonth, B->returnDay, year, month, day))
+        {
+            overB = 1;
+        }
+    }
+
+    /*
+        정렬 우선순위 그룹
+        3 : 연체 대출중
+        2 : 정상 대출중
+        1 : 연체 반납
+        0 : 정상 반납
+    */
+    int groupA = 0;
+    int groupB = 0;
+
+    if (A->state == 1 && overA == 1)
+    {
+        groupA = 3;
+    }
+    else if (A->state == 1)
+    {
+        groupA = 2;
+    }
+    else if (A->state == 3)
+    {
+        groupA = 1;
+    }
+    else
+    {
+        groupA = 0;
+    }
+
+    if (B->state == 1 && overB == 1)
+    {
+        groupB = 3;
+    }
+    else if (B->state == 1)
+    {
+        groupB = 2;
+    }
+    else if (B->state == 3)
+    {
+        groupB = 1;
+    }
+    else
+    {
+        groupB = 0;
+    }
+
+    // 우선순위 높은 그룹이 먼저 오도록 내림차순 정렬
+    if (groupA != groupB)
+    {
+        return groupB - groupA;
+    }
+
+    // 같은 그룹이면 반납 예정일이 빠른 순
+    if (A->returnYear != B->returnYear)
+    {
+        return A->returnYear - B->returnYear;
+    }
+    if (A->returnMonth != B->returnMonth)
+    {
+        return A->returnMonth - B->returnMonth;
+    }
+    if (A->returnDay != B->returnDay)
+    {
+        return A->returnDay - B->returnDay;
+    }
+
+    // 그래도 같으면 ID 작은 순
+    return atoi(A->id) - atoi(B->id);
+}
+
+/*
     관리자 로그인 기능 : 매크로 상수 ADMIN_ID, ADMIN_PW으로만 로그인 가능
 */
 int adminlogin()
 {
-    char name[20], phone[20], password[20];
+    char name[20], password[20];
 
     system("cls");
     drawMainMenu();
@@ -27,20 +122,19 @@ int adminlogin()
     fgets(password, sizeof(password), stdin);
     password[strcspn(password, "\n")] = 0;
 
-    int check = 0;
-
     if (strcmp(name, ADMIN_ID) == 0 && strcmp(password, ADMIN_PW) == 0)
     {
         strcpy(currentUser, name);
         return 1;
-    }  
+    }
     else
     {
         gotoxy(39, 22);
         setColor(RED);
-        printf("정보가 일치하지 않습니다.\n");
+        printf("정보가 일치하지 않습니다.");
         setColor(WHITE);
-        gotoxy(39, 23); system("pause");
+        gotoxy(39, 23);
+        system("pause");
         return 0;
     }
 }
@@ -52,27 +146,35 @@ void addBook()
 {
     Book nullbook = { 0 };
     Book newbook = { 0 };
-    int  count = manageBookFile(books, nullbook, 0, 0);
-    sprintf(newbook.id, "%d", count + 1); // 새 도서 ID
+
+    int count = manageBookFile(books, nullbook, 0, 0);
+
+    int maxId = 0;
+    for (int i = 0; i < count; i++)
+    {
+        int v = atoi(books[i].id);
+        if (v > maxId)
+        {
+            maxId = v;
+        }
+    }
+    sprintf(newbook.id, "%d", maxId + 1);
 
     int startIndex = 0;
     const int ROWS = 15;
 
-    // 1단계 : 도서 목록 + 안내, ←/→ 페이지 이동, Enter로 입력 단계 진입
     while (1)
     {
         system("cls");
         setColor(WHITE);
         drawBox(67, 1, 42, 28, "");
-        setColor(DarkGreen);   drawBox(16, 1, 11, 3, "");
+        setColor(DarkGreen); drawBox(16, 1, 11, 3, "");
         setColor(darkSkyBlue); drawBox(16, 4, 11, 3, "");
-        setColor(DarkYellow);  drawBox(16, 7, 11, 3, "");
-        setColor(RED);         drawBox(16, 10, 11, 3, "");
+        setColor(RED); drawBox(16, 7, 11, 3, "");
         setColor(WHITE);
         drawBox(26, 1, 42, 28, "");
         drawBox(50, 3, 34, 3, "도서 추가");
 
-        // 가운데 박스(26~67) 안에서 출력
         gotoxy(27, 6); printf("ID │제목                         │저자                   │출판사            │재고");
         gotoxy(26, 7); printf("├─────────────────────────────────────────────────────────────────────────────────┤");
 
@@ -83,11 +185,19 @@ void addBook()
             {
                 break;
             }
+            if (books[idx].Bstate != 'N')
+            {
+                continue;
+            }
 
             gotoxy(27, 8 + i);
             setColor(WHITE);
             printf(" %-2s│%-29s│%-23s│%-18s│%2d",
-                books[idx].id, books[idx].bookTitle, books[idx].bookAuthor, books[idx].bookPublish, books[idx].total);
+                books[idx].id,
+                books[idx].bookTitle,
+                books[idx].bookAuthor,
+                books[idx].bookPublish,
+                books[idx].total);
         }
 
         gotoxy(26, 26); printf("├─────────────────────────────────────────────────────────────────────────────────┤");
@@ -96,7 +206,7 @@ void addBook()
 
         int ch = _getch();
 
-        if (ch == 0 || ch == 224)  // 방향키
+        if (ch == 0 || ch == 224)
         {
             ch = _getch();
             if (ch == LEFT && startIndex >= ROWS)
@@ -112,46 +222,117 @@ void addBook()
 
         if (ch == '0')
         {
-            return; // 뒤로 가기
+            return;
         }
 
-        if (ch == 13) // Enter → 입력 단계
+        if (ch == 13)
         {
             break;
         }
     }
 
-    // 2단계 : 제목 / 저자 / 출판사 입력
     system("cls");
     setColor(WHITE);
     drawBox(67, 1, 42, 28, "");
-    setColor(DarkGreen);   drawBox(16, 1, 11, 3, "");
+    setColor(DarkGreen); drawBox(16, 1, 11, 3, "");
     setColor(darkSkyBlue); drawBox(16, 4, 11, 3, "");
-    setColor(DarkYellow);  drawBox(16, 7, 11, 3, "");
-    setColor(RED);         drawBox(16, 10, 11, 3, "");
+    setColor(RED); drawBox(16, 7, 11, 3, "");
     setColor(WHITE);
     drawBox(26, 1, 42, 28, "");
     drawBox(50, 3, 34, 3, "도서 추가");
 
-    gotoxy(32, 7);  printf("새 도서 등록");
-    gotoxy(32, 9);  printf("ID        : %s", newbook.id);
+    gotoxy(32, 7); printf("새 도서 등록");
+    gotoxy(32, 9); printf("ID        : %s", newbook.id);
 
-    gotoxy(32, 12); printf("제목      : ");
-    fgets(newbook.bookTitle, sizeof(newbook.bookTitle), stdin);
-    newbook.bookTitle[strcspn(newbook.bookTitle, "\n")] = 0;
+    while (1)
+    {
+        gotoxy(32, 12); printf("제목      : ");
+        fgets(newbook.bookTitle, sizeof(newbook.bookTitle), stdin);
+        newbook.bookTitle[strcspn(newbook.bookTitle, "\n")] = 0;
 
-    gotoxy(32, 15); printf("저자      : ");
-    fgets(newbook.bookAuthor, sizeof(newbook.bookAuthor), stdin);
-    newbook.bookAuthor[strcspn(newbook.bookAuthor, "\n")] = 0;
+        int empty = 1;
+        for (int i = 0; newbook.bookTitle[i] != '\0'; i++)
+        {
+            if (newbook.bookTitle[i] != ' ' && newbook.bookTitle[i] != '\t')
+            {
+                empty = 0;
+                break;
+            }
+        }
 
-    gotoxy(32, 18); printf("출판사    : ");
-    fgets(newbook.bookPublish, sizeof(newbook.bookPublish), stdin);
-    newbook.bookPublish[strcspn(newbook.bookPublish, "\n")] = 0;
+        if (empty)
+        {
+            setColor(RED);
+            gotoxy(30, 19); printf("이름은 공백일 수 없습니다.");
+            setColor(WHITE);
+            gotoxy(30, 20);
+            system("pause");
+            continue;
+        }
+        break;
+    }
 
-    // 새 도서 기본 재고 1
+    while (1)
+    {
+        gotoxy(32, 15); printf("저자      : ");
+        fgets(newbook.bookAuthor, sizeof(newbook.bookAuthor), stdin);
+        newbook.bookAuthor[strcspn(newbook.bookAuthor, "\n")] = 0;
+
+        int empty = 1;
+        for (int i = 0; newbook.bookAuthor[i] != '\0'; i++)
+        {
+            if (newbook.bookAuthor[i] != ' ' && newbook.bookAuthor[i] != '\t')
+            {
+                empty = 0;
+                break;
+            }
+        }
+
+        if (empty)
+        {
+            setColor(RED);
+            gotoxy(32, 19); printf("제목은 공백일 수 없습니다.");
+            setColor(WHITE);
+            gotoxy(32, 20);
+            system("pause");
+            continue;
+        }
+        break;
+    }
+
+    while (1)
+    {
+        gotoxy(32, 18); printf("출판사    : ");
+        fgets(newbook.bookPublish, sizeof(newbook.bookPublish), stdin);
+        newbook.bookPublish[strcspn(newbook.bookPublish, "\n")] = 0;
+
+        int empty = 1;
+        for (int i = 0; newbook.bookPublish[i] != '\0'; i++)
+        {
+            if (newbook.bookPublish[i] != ' ' && newbook.bookPublish[i] != '\t')
+            {
+                empty = 0;
+                break;
+            }
+        }
+
+        if (empty)
+        {
+            setColor(RED);
+            gotoxy(32, 19); printf("출판사는 공백일 수 없습니다.");
+            setColor(WHITE);
+            gotoxy(32, 20);
+            system("pause");
+            continue;
+        }
+        break;
+    }
+
+
+    newbook.available = 1;
     newbook.total = 1;
+    newbook.Bstate = 'N';
 
-    // 같은 책(제목, 저자, 출판사 모두 동일) 있는지 확인
     int c_Index = -1;
     for (int i = 0; i < count; i++)
     {
@@ -168,13 +349,13 @@ void addBook()
 
     if (c_Index != -1)
     {
-        // 기존 도서 재고 +1 후 파일 덮어쓰기
+        books[c_Index].available += 1;
         books[c_Index].total += 1;
+        books[c_Index].Bstate = 'N';
         result = manageBookFile(books, nullbook, 2, count);
     }
     else
     {
-        // 새로운 도서로 추가 (재고 1)
         result = manageBookFile(NULL, newbook, 1, 0);
     }
 
@@ -201,22 +382,24 @@ void addBook()
 void removeBook()
 {
     Book nullbook = { 0 };
+    Borrow nullborrow = { 0 };
+    Borrow borrowList[1000] = { 0 };
+
     int startIndex = 0;
-    int removeIndex = 0;
     char input1[10] = { 0 };
     char input2[10] = { 0 };
 
-    int count = manageBookFile(books, nullbook, 0, 0); // 도서 목록 읽기
+    int count = manageBookFile(books, nullbook, 0, 0);
+    int borrowCount = manageBorrowFile(borrowList, nullborrow, 0, 0);
 
     if (count == 0)
     {
         system("cls");
         setColor(WHITE);
         drawBox(67, 1, 42, 28, "");
-        setColor(DarkGreen);   drawBox(16, 1, 11, 3, "");
+        setColor(DarkGreen); drawBox(16, 1, 11, 3, "");
         setColor(darkSkyBlue); drawBox(16, 4, 11, 3, "");
-        setColor(DarkYellow);  drawBox(16, 7, 11, 3, "");
-        setColor(RED);         drawBox(16, 10, 11, 3, "");
+        setColor(RED); drawBox(16, 7, 11, 3, "");
         setColor(WHITE);
         drawBox(26, 1, 42, 28, "");
         drawBox(50, 3, 34, 3, "도서 삭제");
@@ -236,13 +419,11 @@ void removeBook()
         drawBox(67, 1, 42, 28, "");
         setColor(DarkGreen); drawBox(16, 1, 11, 3, "");
         setColor(darkSkyBlue); drawBox(16, 4, 11, 3, "");
-        setColor(DarkYellow); drawBox(16, 7, 11, 3, "");
-        setColor(RED); drawBox(16, 10, 11, 3, "");
+        setColor(RED); drawBox(16, 7, 11, 3, "");
         setColor(WHITE);
         drawBox(26, 1, 42, 28, "");
         drawBox(50, 3, 34, 3, "도서 삭제");
 
-        // 가운데 박스(26~67) 안에서 addBook()과 동일 포맷으로 출력
         gotoxy(27, 6); printf("ID │제목                         │저자                   │출판사            │재고");
         gotoxy(26, 7); printf("├─────────────────────────────────────────────────────────────────────────────────┤");
 
@@ -252,6 +433,10 @@ void removeBook()
             if (bookIndex >= count)
             {
                 break;
+            }
+            if (books[bookIndex].Bstate != 'N')
+            {
+                continue;
             }
 
             gotoxy(27, 8 + i);
@@ -270,7 +455,7 @@ void removeBook()
 
         char key = _getch();
 
-        if (key == 0 || key == -32)  // 방향키
+        if (key == 0 || key == -32)
         {
             key = _getch();
 
@@ -284,40 +469,63 @@ void removeBook()
             }
             continue;
         }
-        else if (key == '0')  // 뒤로가기
+        else if (key == '0')
         {
             return;
         }
         else if (key == '1')
         {
-            // 삭제할 도서 번호 입력
-            gotoxy(28, 27); printf("                                               ");
-            gotoxy(28, 27); printf("삭제할 도서 번호(ID) 입력 : ");
+            gotoxy(28, 27); printf("                                                           ");
+            gotoxy(28, 27); printf("삭제할 도서 ID 입력 : ");
             fgets(input1, sizeof(input1), stdin);
             input1[strcspn(input1, "\n")] = 0;
 
-            int select = atoi(input1);
+            int removeIndex = -1;
+            for (int i = 0; i < count; i++)
+            {
+                if (books[i].Bstate == 'N' && strcmp(books[i].id, input1) == 0)
+                {
+                    removeIndex = i;
+                    break;
+                }
+            }
 
-            if (select > count || select < 1)
+            if (removeIndex == -1)
             {
                 setColor(RED);
-                gotoxy(72, 10); printf("잘못된 번호입니다.");
+                gotoxy(72, 10); printf("해당 ID의 도서를 찾을 수 없습니다.");
                 setColor(WHITE);
-                gotoxy(72, 12); printf("아무 키나 누르면 돌아갑니다...");
+                gotoxy(72, 12); printf("아무 키나 누르세요...");
                 _getch();
                 continue;
             }
 
-            removeIndex = select - 1;
+            int borrowingNow = 0;
+            for (int i = 0; i < borrowCount; i++)
+            {
+                if (strcmp(borrowList[i].id, books[removeIndex].id) == 0 && borrowList[i].state == 1)
+                {
+                    borrowingNow = 1;
+                    break;
+                }
+            }
 
-            // 확인 화면
+            if (borrowingNow)
+            {
+                setColor(RED);
+                gotoxy(72, 10); printf("현재 대출 중인 도서는 삭제할 수 없습니다.");
+                setColor(WHITE);
+                gotoxy(72, 12); printf("아무 키나 누르세요...");
+                _getch();
+                continue;
+            }
+
             system("cls");
             setColor(WHITE);
             drawBox(67, 1, 42, 28, "");
-            setColor(DarkGreen);   drawBox(16, 1, 11, 3, "");
+            setColor(DarkGreen); drawBox(16, 1, 11, 3, "");
             setColor(darkSkyBlue); drawBox(16, 4, 11, 3, "");
-            setColor(DarkYellow);  drawBox(16, 7, 11, 3, "");
-            setColor(RED);         drawBox(16, 10, 11, 3, "");
+            setColor(RED); drawBox(16, 7, 11, 3, "");
             setColor(WHITE);
             drawBox(26, 1, 42, 28, "");
             drawBox(50, 3, 34, 3, "도서 삭제 확인");
@@ -329,26 +537,14 @@ void removeBook()
             gotoxy(32, 10); printf("저자 : %s", books[removeIndex].bookAuthor);
             gotoxy(32, 11); printf("출판사 : %s", books[removeIndex].bookPublish);
 
-            gotoxy(32, 14); printf("[Y] 예  [N] 아니오(뒤로 가기) : ");
+            gotoxy(32, 14); printf("Y 예 N 아니오 : ");
             fgets(input2, sizeof(input2), stdin);
             input2[strcspn(input2, "\n")] = 0;
 
             if (input2[0] == 'y' || input2[0] == 'Y')
             {
-                // 한 칸씩 당겨서 삭제
-                for (int i = removeIndex; i < count - 1; i++)
-                {
-                    books[i] = books[i + 1];
-                }
-                count--; // 항목 수 감소
+                books[removeIndex].Bstate = 'D';
 
-                // ID 재부여
-                for (int i = 0; i < count; i++)
-                {
-                    snprintf(books[i].id, sizeof(books[i].id), "%d", i + 1);
-                }
-
-                // 파일 재저장
                 if (manageBookFile(books, nullbook, 2, count))
                 {
                     setColor(GREEN);
@@ -362,23 +558,14 @@ void removeBook()
                     setColor(WHITE);
                 }
 
-                gotoxy(72, 12); printf("아무 키나 누르면 돌아갑니다...");
+                gotoxy(72, 12); printf("아무 키나 누르세요...");
                 _getch();
                 return;
             }
-            else if (input2[0] == 'n' || input2[0] == 'N')
-            {
-                gotoxy(72, 10); printf("취소되었습니다.");
-                gotoxy(72, 12); printf("아무 키나 누르면 돌아갑니다...");
-                _getch();
-                continue;
-            }
             else
             {
-                setColor(RED);
-                gotoxy(72, 10); printf("잘못된 입력입니다.");
-                setColor(WHITE);
-                gotoxy(72, 12); printf("아무 키나 누르면 돌아갑니다...");
+                gotoxy(72, 10); printf("취소되었습니다.");
+                gotoxy(72, 12); printf("아무 키나 누르세요...");
                 _getch();
                 continue;
             }
@@ -387,31 +574,21 @@ void removeBook()
 }
 
 /*
-    대출 조회 기능 (관리자) (연체 > 대출 > 반납완료 정렬 ㄱㄱ)
+    대출 조회 기능 (관리자) (연체 > 대출 > 반납완료 정렬)
 */
 void viewBorrowRecords()
 {
     Borrow borrowList[1000] = { 0 };
-    Book books[1000] = { 0 };
+    Book booksLocal[1000] = { 0 };
     Borrow nullborrow = { 0 };
     Book nullbook = { 0 };
 
     int borrowCount = manageBorrowFile(borrowList, nullborrow, 0, 0);
-    int bookCount = manageBookFile(books, nullbook, 0, 0);
+    int bookCount = manageBookFile(booksLocal, nullbook, 0, 0);
 
-    // state 기준 내림차순 정렬 (연체 > 대출 중 > 반납 완료)
-    for (int i = 0; i < borrowCount - 1; i++)
-    {
-        for (int j = i + 1; j < borrowCount; j++)
-        {
-            if (borrowList[i].state < borrowList[j].state)
-            {
-                Borrow temp = borrowList[i];
-                borrowList[i] = borrowList[j];
-                borrowList[j] = temp;
-            }
-        }
-    }
+    getDate(0);
+
+    qsort(borrowList, borrowCount, sizeof(Borrow), compareBorrowRecords);
 
     int startIndex = 0;
     const int ROWS = 15;
@@ -424,69 +601,103 @@ void viewBorrowRecords()
         drawBox(67, 1, 42, 28, "");
         setColor(DarkGreen); drawBox(16, 1, 11, 3, "");
         setColor(darkSkyBlue); drawBox(16, 4, 11, 3, "");
-        setColor(DarkYellow); drawBox(16, 7, 11, 3, "");
-        setColor(RED); drawBox(16, 10, 11, 3, "");
+        setColor(RED); drawBox(16, 7, 11, 3, "");
         setColor(WHITE);
         drawBox(26, 1, 42, 28, "");
         drawBox(50, 3, 34, 3, "전체 대출 내역");
 
         gotoxy(27, 6);
-        printf("ID │제목                         │전화번호       │반납 예정일 │상태");
+        printf("ID │ 제목                        │ 전화번호         │ 반납 예정일  │상태");
         gotoxy(26, 7);
         printf("├─────────────────────────────────────────────────────────────────────────────────┤");
 
         int check = 0;
 
+        getDate(0);
+
         for (int i = 0; i < ROWS; i++)
         {
             int recordIndex = startIndex + i;
             if (recordIndex >= borrowCount)
+            {
                 break;
+            }
 
             check = 1;
 
-            // 제목 찾기
             char fullTitle[50] = "제목없음";
             for (int j = 0; j < bookCount; j++)
             {
-                if (strcmp(borrowList[recordIndex].id, books[j].id) == 0)
+                if (strcmp(borrowList[recordIndex].id, booksLocal[j].id) == 0)
                 {
-                    strcpy(fullTitle, books[j].bookTitle);
+                    strcpy(fullTitle, booksLocal[j].bookTitle);
                     break;
                 }
             }
 
             if (strlen(fullTitle) > 29)
+            {
                 snprintf(titleShort, sizeof(titleShort), "%.29s", fullTitle);
+            }
             else
+            {
                 strcpy(titleShort, fullTitle);
+            }
 
-            // 상태별 색상
-            if (borrowList[recordIndex].state == 2)
-                setColor(RED); // 연체
-            else if (borrowList[recordIndex].state == 1)
-                setColor(GREEN); // 대출 중
-            else if (borrowList[recordIndex].state == 0)
-                setColor(GRAY); // 반납 완료
+            int s = borrowList[recordIndex].state;
+            int overBorrowing = 0;
+
+            if (s == 1)
+            {
+                if (isBeforeDate(borrowList[recordIndex].returnYear, borrowList[recordIndex].returnMonth, borrowList[recordIndex].returnDay, year, month, day))
+                {
+                    overBorrowing = 1;
+                }
+            }
+
+            if (s == 1 && overBorrowing)
+            {
+                setColor(RED);
+            }
+            else if (s == 1)
+            {
+                setColor(GREEN);
+            }
+            else if (s == 2)
+            {
+                setColor(GRAY);
+            }
+            else if (s == 3)
+            {
+                setColor(RED);
+            }
             else
+            {
                 setColor(WHITE);
+            }
+
+            const char* st =
+                (s == 1 && overBorrowing) ? "연체 대출중" :
+                (s == 1) ? "대출 중" :
+                (s == 2) ? "정상 반납" :
+                (s == 3) ? "연체 반납" : "알수없음";
 
             gotoxy(27, 8 + i);
-            printf(" %-2s│%-29s│%-13s│ %4d-%02d-%02d │ %s",
+            printf(" %-2s│ %-28s│ %-16s │ %4d-%02d-%02d   │ %s",
                 borrowList[recordIndex].id,
                 titleShort,
                 borrowList[recordIndex].borrowerPhone,
                 borrowList[recordIndex].returnYear,
                 borrowList[recordIndex].returnMonth,
                 borrowList[recordIndex].returnDay,
-                borrowList[recordIndex].state == 0 ? "반납 완료"
-                : (borrowList[recordIndex].state == 1 ? "대출 중" : "연체 중"));
+                st);
         }
 
         setColor(WHITE);
-        if (check == 0)
+
+        if (!check)
         {
-            gotoxy(27, 8);
+            gotoxy(28, 10);
             printf("대출 내역이 없습니다.");
         }
 
@@ -499,7 +710,7 @@ void viewBorrowRecords()
 
         char key = _getch();
 
-        if (key == 0 || key == 224) // 방향키
+        if (key == 0 || key == 224)
         {
             key = _getch();
             if (key == LEFT && startIndex >= ROWS)
@@ -511,7 +722,7 @@ void viewBorrowRecords()
                 startIndex += ROWS;
             }
         }
-        else if (key == '0') // 뒤로 가기
+        else if (key == '0')
         {
             return;
         }
