@@ -119,8 +119,29 @@ int adminlogin()
     name[strcspn(name, "\n")] = 0;
 
     gotoxy(44, 10); printf("비밀번호      : ");
-    fgets(password, sizeof(password), stdin);
-    password[strcspn(password, "\n")] = 0;
+    int idx = 0;
+    char k;
+
+    while (1)
+    {
+        k = _getch();
+
+        if (k == 13) // 엔터치면 입력 완료
+        {
+            password[idx] = '\0'; // 어디까지가 문자열인지 배열에 엔터를 직접 넣음으로써 판단할 수 있게 한다.
+            break;
+        }
+        else if (k == 8) // 백스페이스 누르면 지워져야 하는데...
+        {
+            printf("\b \b");
+        }
+        else if (k >= 33 && k <= 126) // !부터 ~까지인데 뭔지모르겟으면 톡방 사진 참고
+        {
+            // 입력한 문자를 저장하나, 실제로 출력되는 건 *임
+            password[idx++] = k;
+            printf("*");
+        }
+    }
 
     if (strcmp(name, ADMIN_ID) == 0 && strcmp(password, ADMIN_PW) == 0)
     {
@@ -136,6 +157,282 @@ int adminlogin()
         gotoxy(39, 23);
         system("pause");
         return 0;
+    }
+}
+
+/*
+    회원 조회/삭제 기능
+*/
+void m_removeUser()
+{
+    Member nullMember = { 0 };
+    Borrow nullBorrow = { 0 };
+    Borrow borrowList[1000] = { 0 };
+
+    int count = manageMemberFile(members, nullMember, 0, 0);
+    int borrowCount = manageBorrowFile(borrowList, nullBorrow, 0, 0);
+
+    if (count == 0)
+    {
+        system("cls");
+        setColor(WHITE);
+        drawBox(67, 1, 42, 28, "");
+        setColor(DarkGreen); drawBox(16, 1, 11, 3, "");
+        setColor(darkSkyBlue); drawBox(16, 4, 11, 3, "");
+        setColor(RED); drawBox(16, 7, 11, 3, "");
+        setColor(WHITE);
+        drawBox(26, 1, 42, 28, "");
+        drawBox(50, 3, 34, 3, "회원 조회 삭제");
+
+        gotoxy(72, 12); printf("회원 데이터가 없습니다.");
+        gotoxy(72, 14); printf("아무 키나 누르세요...");
+        _getch();
+        return;
+    }
+
+    int startIndex = 0;
+    const int ROWS = 15;
+
+    while (1)
+    {
+        system("cls");
+        setColor(WHITE);
+        drawBox(67, 1, 42, 28, "");
+        setColor(DarkGreen); drawBox(16, 1, 11, 3, "");
+        setColor(darkSkyBlue); drawBox(16, 4, 11, 3, "");
+        setColor(RED); drawBox(16, 7, 11, 3, "");
+        setColor(WHITE);
+        drawBox(26, 1, 42, 28, "");
+        drawBox(50, 3, 34, 3, "회원 조회 삭제");
+
+        gotoxy(27, 6);
+        printf("번호│ 이름      │ 전화번호     │ 상태");
+        gotoxy(26, 7);
+        printf("├────────────────────────────────────────┤");
+
+        int activeIdx[1000];
+        int activeCount = 0;
+
+        for (int i = 0; i < count; i++)
+        {
+            if (members[i].Mstate == 'N')
+            {
+                activeIdx[activeCount++] = i;
+            }
+        }
+
+        getDate(0);
+
+        if (activeCount == 0)
+        {
+            gotoxy(27, 9); printf("현재 존재하는 회원이 없습니다.");
+        }
+        else
+        {
+            for (int i = 0; i < ROWS; i++)
+            {
+                int viewIndex = startIndex + i;
+                if (viewIndex >= activeCount)
+                {
+                    break;
+                }
+
+                int mi = activeIdx[viewIndex];
+
+                int borrowingNow = 0;
+                int overdueNow = 0;
+
+                for (int b = 0; b < borrowCount; b++)
+                {
+                    if (borrowList[b].state == 1)
+                    {
+                        if (strcmp(borrowList[b].borrowerPhone, members[mi].phone) == 0)
+                        {
+                            borrowingNow = 1;
+
+                            if (isBeforeDate(borrowList[b].returnYear, borrowList[b].returnMonth, borrowList[b].returnDay, year, month, day))
+                            {
+                                overdueNow = 1;
+                                break;
+                            }
+                        }
+                    }
+                }
+
+                gotoxy(27, 8 + i);
+                setColor(WHITE);
+                printf(" %2d │ %-10s│ %-13s│ ",
+                    viewIndex + 1,
+                    members[mi].name,
+                    members[mi].phone);
+
+                if (overdueNow)
+                {
+                    setColor(RED);
+                    printf("연체 중");
+                }
+                else if (borrowingNow)
+                {
+                    setColor(GREEN);
+                    printf("대출 중");
+                }
+                else
+                {
+                    setColor(WHITE);
+                    printf("정상");
+                }
+                setColor(WHITE);
+            }
+        }
+
+        gotoxy(26, 26);
+        printf("├────────────────────────────────────────┤");
+        gotoxy(26, 28);
+        printf("└────────────────────────────────────────┘");
+        gotoxy(28, 27);
+        printf("[1] 회원 삭제  [0] 뒤로 가기");
+
+        int ch = _getch();
+
+        if (ch == 0 || ch == 224)
+        {
+            ch = _getch();
+            if (ch == LEFT && startIndex >= ROWS)
+            {
+                startIndex -= ROWS;
+            }
+            else if (ch == RIGHT && startIndex + ROWS < activeCount)
+            {
+                startIndex += ROWS;
+            }
+            continue;
+        }
+
+        if (ch == '0')
+        {
+            return;
+        }
+
+        if (ch != '1')
+        {
+            continue;
+        }
+
+        if (activeCount == 0)
+        {
+            continue;
+        }
+
+        char input1[10] = { 0 };
+        gotoxy(72, 9);  printf("삭제할 회원 번호 입력");
+        gotoxy(72, 10); printf("번호 : ");
+        fgets(input1, sizeof(input1), stdin);
+        input1[strcspn(input1, "\n")] = 0;
+
+        int select = atoi(input1);
+
+        if (select < 1 || select > activeCount)
+        {
+            setColor(RED);
+            gotoxy(72, 12); printf("잘못된 번호입니다.");
+            setColor(WHITE);
+            gotoxy(72, 14); printf("아무 키나 누르세요...");
+            _getch();
+            continue;
+        }
+
+        int removeIndex = activeIdx[select - 1];
+
+        int borrowingNow = 0;
+        int overdueNow = 0;
+
+        getDate(0);
+
+        for (int i = 0; i < borrowCount; i++)
+        {
+            if (borrowList[i].state == 1)
+            {
+                if (strcmp(borrowList[i].borrowerPhone, members[removeIndex].phone) == 0)
+                {
+                    borrowingNow = 1;
+
+                    if (isBeforeDate(borrowList[i].returnYear, borrowList[i].returnMonth, borrowList[i].returnDay, year, month, day))
+                    {
+                        overdueNow = 1;
+                    }
+                    break;
+                }
+            }
+        }
+
+        if (borrowingNow)
+        {
+            setColor(RED);
+            if (overdueNow)
+            {
+                gotoxy(72, 12); printf("연체 대출 중인 회원은 삭제할 수 없습니다.");
+            }
+            else
+            {
+                gotoxy(72, 12); printf("대출 중인 회원은 삭제할 수 없습니다.");
+            }
+            setColor(WHITE);
+            gotoxy(72, 14); printf("아무 키나 누르세요...");
+            _getch();
+            continue;
+        }
+
+        system("cls");
+        setColor(WHITE);
+        drawBox(67, 1, 42, 28, "");
+        setColor(DarkGreen); drawBox(16, 1, 11, 3, "");
+        setColor(darkSkyBlue); drawBox(16, 4, 11, 3, "");
+        setColor(RED); drawBox(16, 7, 11, 3, "");
+        setColor(WHITE);
+        drawBox(26, 1, 42, 28, "");
+        drawBox(50, 3, 34, 3, "회원 삭제 확인");
+
+        setColor(RED);
+        gotoxy(32, 7);  printf("정말로 삭제하시겠습니까?");
+        setColor(WHITE);
+        gotoxy(32, 9);  printf("이름 : %s", members[removeIndex].name);
+        gotoxy(32, 10); printf("전화번호 : %s", members[removeIndex].phone);
+
+        char input2[10] = { 0 };
+        gotoxy(32, 14); printf("Y 예 N 아니오 : ");
+        fgets(input2, sizeof(input2), stdin);
+        input2[strcspn(input2, "\n")] = 0;
+
+        if (input2[0] == 'y' || input2[0] == 'Y')
+        {
+            members[removeIndex].Mstate = 'D';
+
+            if (manageMemberFile(members, nullMember, 2, count))
+            {
+                setColor(GREEN);
+                gotoxy(72, 10); printf("회원이 삭제되었습니다.");
+                setColor(WHITE);
+            }
+            else
+            {
+                setColor(RED);
+                gotoxy(72, 10); printf("파일 갱신 실패.");
+                setColor(WHITE);
+            }
+
+            gotoxy(72, 12); printf("아무 키나 누르세요...");
+            _getch();
+        }
+        else
+        {
+            gotoxy(72, 10); printf("취소되었습니다.");
+            gotoxy(72, 12); printf("아무 키나 누르세요...");
+            _getch();
+        }
+
+        count = manageMemberFile(members, nullMember, 0, 0);
+        borrowCount = manageBorrowFile(borrowList, nullBorrow, 0, 0);
+        startIndex = 0;
     }
 }
 
@@ -425,7 +722,8 @@ void removeBook()
         drawBox(50, 3, 34, 3, "도서 삭제");
 
         gotoxy(27, 6); printf("ID │제목                         │저자                   │출판사            │재고");
-        gotoxy(26, 7); printf("├─────────────────────────────────────────────────────────────────────────────────┤");
+        gotoxy(26, 7);
+        printf("├─────────────────────────────────────────────────────────────────────────────────┤");
 
         for (int i = 0; i < ROWS; i++)
         {

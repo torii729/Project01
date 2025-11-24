@@ -227,7 +227,7 @@ int userMenu()
         }
         else if (input[0] == '5')
         {
-            // u_removeUser();
+            u_removeUser();
         }
         else if (input[0] == '6')
         {
@@ -274,9 +274,8 @@ int adminMenu()
         gotoxy(34, 16); printf("1. 도서 등록");
         gotoxy(34, 17); printf("2. 도서 삭제");
         gotoxy(34, 18); printf("3. 대출 현황");
-        gotoxy(48, 16); printf("4. 회원 조회");
-        gotoxy(48, 17); printf("5. 회원 삭제");
-        setColor(RED);  gotoxy(48, 18); printf("6. 로그아웃");
+        gotoxy(48, 16); printf("4. 회원 조회/삭제");
+        setColor(RED);  gotoxy(48, 17); printf("5. 로그아웃");
 
         setColor(WHITE);  gotoxy(73, 20); printf("──────────────────────────────");
         gotoxy(31, 22); printf("──────────────────────────────────");
@@ -297,13 +296,9 @@ int adminMenu()
         }
         else if (input[0] == '4')
         {
-            // viewUser();
+            m_removeUser();
         }
         else if (input[0] == '5')
-        {
-            // m_removeUser();
-        }
-        else if (input[0] == '6')
         {
             return 0;
         }

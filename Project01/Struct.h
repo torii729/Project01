@@ -66,16 +66,15 @@ int adminMenu(); // 로그인 후 "관리자" 메인 메뉴 함수
 int login(); // 로그인 기능 함수
 int adminlogin(); // 관리자 로그인 기능 함수
 void signUp(); // 회원가입 기능 함수
-void userFix(); // 회원 수정 함수
-// void u_removeUser(); // 회원 탈퇴(사용자)
 
 /*
     사용자 주요 기능
 */
 void handleBorrowSearch(); // 도서 대출 (검색 후 대출)
 void handleReturn(); // 도서 반납
-// void showBookList(); // 도서 목록 (보류)
 void viewBorrowHistory(); // 대출 내역
+void userFix(); // 회원 수정 함수
+void u_removeUser(); // 회원 탈퇴(사용자)
 
 /*
     관리자 주요 기능
@@ -84,5 +83,4 @@ int compareBorrowRecords(const void* a, const void* b); // 비교 함수 (대출 기록 
 void addBook(); // 도서 등록
 void removeBook(); // 도서 삭제
 void viewBorrowRecords(); // 대출/연체 내역 조회
-// void viewUser(); // 회원 조회
-// void m_removeUser(); // 회원 삭제(관리자)
+void m_removeUser(); // 회원 삭제(관리자)

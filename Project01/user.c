@@ -48,8 +48,30 @@ int login()
     phone[strcspn(phone, "\n")] = 0;
 
     gotoxy(44, 15); printf("비밀번호    : ");
-    fgets(password, sizeof(password), stdin);
-    password[strcspn(password, "\n")] = 0;
+
+    int idx = 0;
+    char k;
+
+    while (1)
+    {
+        k = _getch();
+
+        if (k == 13) // 엔터치면 입력 완료
+        {
+            password[idx] = '\0'; // 어디까지가 문자열인지 배열에 엔터를 직접 넣음으로써 판단할 수 있게 한다.
+            break;
+        }
+        else if (k == 8) // 백스페이스 누르면 지워져야 하는데...
+        {
+            printf("\b \b");
+        }
+        else if (k >= 33 && k <= 126) // !부터 ~까지인데 뭔지모르겟으면 톡방 사진 참고
+        {
+            // 입력한 문자를 저장하나, 실제로 출력되는 건 *임
+            password[idx++] = k;
+            printf("*");
+        }
+    }
 
     int check = 0;
 
@@ -139,46 +161,47 @@ void signUp()
         newMember.phone[strcspn(newMember.phone, "\n")] = 0;
 
         int len = 0;
-        int lastWasDash = 0;
-        int validFormat = 1;
+        int lastDash = 0;
+        int format = 1;
 
         for (; newMember.phone[len] != '\0'; len++)
         {
             char ch = newMember.phone[len];
             if (!((ch >= '0' && ch <= '9') || ch == '-'))
             {
-                validFormat = 0;
+                format = 0;
                 break;
             }
             if (ch == '-')
             {
-                if (lastWasDash)
+                if (lastDash)
                 {
-                    validFormat = 0;
+                    format = 0;
                     break;
                 }
-                lastWasDash = 1;
+                lastDash = 1;
             }
             else
             {
-                lastWasDash = 0;
+                lastDash = 0;
             }
         }
 
         if (len == 0 || newMember.phone[0] == '-' || newMember.phone[len - 1] == '-')
         {
-            validFormat = 0;
+            format = 0;
         }
 
-        if (!validFormat)
+        if (!format)
         {
             setColor(RED);
             gotoxy(39, 19); printf("전화번호 형식이 올바르지 않습니다.");
             setColor(WHITE);
             gotoxy(39, 20);
             system("pause");
-            gotoxy(39, 19); printf("                                ");
-            gotoxy(39, 20); printf("                                ");
+            gotoxy(54, 11); printf("                  ");
+            gotoxy(39, 19); printf("                                       ");
+            gotoxy(39, 20); printf("                                       ");
             continue;
         }
 
@@ -194,8 +217,9 @@ void signUp()
                     setColor(WHITE);
                     gotoxy(39, 20);
                     system("pause");
-                    gotoxy(39, 19); printf("                                ");
-                    gotoxy(39, 20); printf("                                ");
+                    gotoxy(54, 11); printf("                  ");
+                    gotoxy(39, 19); printf("                                      ");
+                    gotoxy(39, 20); printf("                                      ");
                     break;
                 }
             }
@@ -230,6 +254,7 @@ void signUp()
             setColor(WHITE);
             gotoxy(39, 20);
             system("pause");
+            gotoxy(54, 15); printf("                  ");
             gotoxy(39, 19); printf("                                ");
             gotoxy(39, 20); printf("                                ");
             continue;
@@ -543,6 +568,135 @@ void userFix()
         setColor(WHITE);
         gotoxy(39, 24);
         system("pause");
+    }
+}
+
+/*
+    회원 탈퇴 기능
+*/
+void u_removeUser()
+{
+    Member nullMember = { 0 };
+    Borrow nullBorrow = { 0 };
+    Borrow borrowList[1000] = { 0 };
+
+    int count = manageMemberFile(members, nullMember, 0, 0);
+    int borrowCount = manageBorrowFile(borrowList, nullBorrow, 0, 0);
+
+    system("cls");
+    drawMainMenu();
+
+    drawBox(36, 1, 42, 28, "");
+    drawBox(40, 3, 34, 3, "회원 탈퇴");
+
+    if (count == 0)
+    {
+        setColor(RED);
+        gotoxy(39, 19); printf("회원 데이터가 없습니다.");
+        setColor(WHITE);
+        gotoxy(39, 20);
+        system("pause");
+        return;
+    }
+
+    int idx = -1;
+    for (int i = 0; i < count; i++)
+    {
+        if (members[i].Mstate == 'N')
+        {
+            if (strcmp(members[i].phone, currentPhone) == 0)
+            {
+                idx = i;
+                break;
+            }
+        }
+    }
+
+    if (idx == -1)
+    {
+        setColor(RED);
+        gotoxy(39, 19); printf("현재 로그인된 회원을 찾을 수 없습니다.");
+        setColor(WHITE);
+        gotoxy(39, 20);
+        system("pause");
+        gotoxy(39, 19); printf("                                ");
+        gotoxy(39, 20); printf("                                ");
+        return;
+    }
+
+    int borrowingNow = 0;
+    for (int i = 0; i < borrowCount; i++)
+    {
+        if (borrowList[i].state == 1)
+        {
+            if (strcmp(borrowList[i].borrowerPhone, currentPhone) == 0)
+            {
+                borrowingNow = 1;
+                break;
+            }
+        }
+    }
+
+    gotoxy(44, 7);  printf("현재 이름      : %s", members[idx].name);
+    gotoxy(44, 9);  printf("현재 전화번호  : %s", members[idx].phone);
+
+    if (borrowingNow)
+    {
+        setColor(RED);
+        gotoxy(39, 19); printf("대출 도서가 있어 탈퇴할 수 없습니다.");
+        setColor(WHITE);
+        gotoxy(39, 20);
+        system("pause");
+        gotoxy(39, 19); printf("                                           ");
+        gotoxy(39, 20); printf("                                           ");
+        return;
+    }
+
+    char input[10] = { 0 };
+
+    gotoxy(44, 13); printf("정말로 탈퇴하시겠습니까?");
+    gotoxy(44, 15); printf("Y 예 N 아니오 : ");
+    fgets(input, sizeof(input), stdin);
+    input[strcspn(input, "\n")] = 0;
+
+    if (input[0] == 'y' || input[0] == 'Y')
+    {
+        members[idx].Mstate = 'D';
+
+        int saved = manageMemberFile(members, nullMember, 2, count);
+
+        if (saved == 1)
+        {
+            setColor(GREEN);
+            gotoxy(39, 23); printf("회원 탈퇴가 완료되었습니다.");
+            setColor(WHITE);
+
+            currentUser[0] = '\0';
+            currentPhone[0] = '\0';
+
+            gotoxy(39, 24);
+            system("pause");
+            _getch();
+
+            mainLogin();
+            return;
+        }
+        else
+        {
+            setColor(RED);
+            gotoxy(39, 23); printf("회원 탈퇴 저장 실패.");
+            setColor(WHITE);
+            gotoxy(39, 24);
+            system("pause");
+            return;
+        }
+    }
+    else
+    {
+        gotoxy(39, 23); printf("취소되었습니다.");
+        gotoxy(39, 24);
+        system("pause");
+        return;
     }
 }
 
@@ -1210,4 +1364,3 @@ void viewBorrowHistory()
         }
     }
 }
-
