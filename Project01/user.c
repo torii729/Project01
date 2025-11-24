@@ -4,6 +4,101 @@
 #define RIGHT 77
 
 /*
+    비교 함수 (대출 기록 배열 borrowList를 정렬하는 부분)
+*/
+int compareBorrowRecords(const void* a, const void* b)
+{
+    const Borrow* A = (const Borrow*)a;
+    const Borrow* B = (const Borrow*)b;
+
+    int overA = 0;
+    int overB = 0;
+
+    // 대출중인 기록만 날짜로 연체 대출중 여부 판정
+    if (A->state == 1)
+    {
+        if (isBeforeDate(A->returnYear, A->returnMonth, A->returnDay, year, month, day))
+        {
+            overA = 1;
+        }
+    }
+    if (B->state == 1)
+    {
+        if (isBeforeDate(B->returnYear, B->returnMonth, B->returnDay, year, month, day))
+        {
+            overB = 1;
+        }
+    }
+
+    /*
+        정렬 우선순위 그룹
+        3 : 연체 대출중
+        2 : 정상 대출중
+        1 : 연체 반납
+        0 : 정상 반납
+    */
+    int groupA = 0;
+    int groupB = 0;
+
+    if (A->state == 1 && overA == 1)
+    {
+        groupA = 3;
+    }
+    else if (A->state == 1)
+    {
+        groupA = 2;
+    }
+    else if (A->state == 3)
+    {
+        groupA = 1;
+    }
+    else
+    {
+        groupA = 0;
+    }
+
+    if (B->state == 1 && overB == 1)
+    {
+        groupB = 3;
+    }
+    else if (B->state == 1)
+    {
+        groupB = 2;
+    }
+    else if (B->state == 3)
+    {
+        groupB = 1;
+    }
+    else
+    {
+        groupB = 0;
+    }
+
+    // 우선순위 높은 그룹이 먼저 오도록 내림차순 정렬
+    if (groupA != groupB)
+    {
+        return groupB - groupA;
+    }
+
+    // 같은 그룹이면 반납 예정일이 빠른 순
+    if (A->returnYear != B->returnYear)
+    {
+        return A->returnYear - B->returnYear;
+    }
+    if (A->returnMonth != B->returnMonth)
+    {
+        return A->returnMonth - B->returnMonth;
+    }
+    if (A->returnDay != B->returnDay)
+    {
+        return A->returnDay - B->returnDay;
+    }
+
+    // 그래도 같으면 ID 작은 순
+    return atoi(A->id) - atoi(B->id);
+}
+
+/*
     날짜 비교 함수
 */
 int isBeforeDate(int y1, int m1, int d1, int y2, int m2, int d2)
@@ -1221,7 +1316,7 @@ void handleReturn()
 }
 
 /*
-    대출 조회 기능 (사용자) (도서 ID 순서)
+    대출 조회 기능 (사용자) (연체 > 대출 > 반납완료 정렬)
 */
 void viewBorrowHistory()
 {
@@ -1231,19 +1326,6 @@ void viewBorrowHistory()
 
     int borrowCount = manageBorrowFile(borrowList, nullborrow, 0, 0);
     int bookCount = manageBookFile(books, nullbook, 0, 0);
-
-    for (int i = 0; i < borrowCount - 1; i++)
-    {
-        for (int j = i + 1; j < borrowCount; j++)
-        {
-            if (strcmp(borrowList[i].id, borrowList[j].id) > 0)
-            {
-                Borrow temp = borrowList[i];
-                borrowList[i] = borrowList[j];
-                borrowList[j] = temp;
-            }
-        }
-    }
 
     Borrow userList[1000];
     int count1 = 0;
@@ -1255,6 +1337,9 @@ void viewBorrowHistory()
             userList[count1++] = borrowList[i];
         }
     }
+
+    getDate(0);
+    qsort(userList, count1, sizeof(Borrow), compareBorrowRecords);
 
     int startIndex = 0;
     char title[31];
@@ -1284,7 +1369,10 @@ void viewBorrowHistory()
         for (int i = 0; i < ROWS; i++)
         {
             int recordIndex = startIndex + i;
-            if (recordIndex >= count1) break;
+            if (recordIndex >= count1)
+            {
+                break;
+            }
 
             check = 1;
 
@@ -1300,16 +1388,37 @@ void viewBorrowHistory()
 
             int s = userList[recordIndex].state;
             int overdueBorrowing = 0;
+
             if (s == 1)
             {
-                overdueBorrowing = isBeforeDate(userList[recordIndex].returnYear, userList[recordIndex].returnMonth, userList[recordIndex].returnDay, year, month, day);
+                overdueBorrowing = isBeforeDate(
+                    userList[recordIndex].returnYear,
+                    userList[recordIndex].returnMonth,
+                    userList[recordIndex].returnDay,
+                    year, month, day
+                );
             }
 
-            if (s == 1 && overdueBorrowing) setColor(RED);
-            else if (s == 1) setColor(GREEN);
-            else if (s == 2) setColor(GRAY);
-            else if (s == 3) setColor(RED);
-            else setColor(WHITE);
+            if (s == 1 && overdueBorrowing)
+            {
+                setColor(RED);
+            }
+            else if (s == 1)
+            {
+                setColor(GREEN);
+            }
+            else if (s == 2)
+            {
+                setColor(GRAY);
+            }
+            else if (s == 3)
+            {
+                setColor(RED);
+            }
+            else
+            {
+                setColor(WHITE);
+            }
 
             const char* st =
                 (s == 1 && overdueBorrowing) ? "연체 대출중" :
