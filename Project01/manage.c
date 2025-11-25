@@ -1,10 +1,10 @@
 #include "Header.h"
 
-#define ADMIN_ID "admin"      // 관리자 아이디 매크로 상수
-#define ADMIN_PW "password!"  // 관리자 비밀번호 매크로 상수
+#define ADMIN_ID "admin" // 관리자 아이디 매크로 상수
+#define ADMIN_PW "password!" // 관리자 비밀번호 매크로 상수
 
-#define LEFT 75   // 키보드 왼쪽 화살표 코드
-#define RIGHT 77  // 키보드 오른쪽 화살표 코드
+#define LEFT 75 // 키보드 왼쪽 화살표 코드
+#define RIGHT 77 // 키보드 오른쪽 화살표 코드
 
 /*
     비교 함수 (대출 기록 배열 borrowList를 정렬하는 부분)
@@ -372,7 +372,7 @@ void m_removeUser()
 void addBook()
 {
     Book nullbook = { 0 }; // 파일 읽기용 빈 책
-    Book newbook = { 0 };  // 새 책 정보 저장
+    Book newbook = { 0 }; // 새 책 정보 저장
 
     int count = manageBookFile(books, nullbook, 0, 0); // 책 목록 읽기
 
@@ -818,12 +818,12 @@ void removeBook()
 void viewBorrowRecords()
 {
     Borrow borrowList[1000] = { 0 }; // 전체 대출 목록
-    Book booksLocal[1000] = { 0 };   // 책 목록 로컬 복사
+    Book booksLocal[1000] = { 0 }; // 책 목록 로컬 복사
     Borrow nullborrow = { 0 }; // 파일 읽기용 빈 대출
-    Book nullbook = { 0 };     // 파일 읽기용 빈 책
+    Book nullbook = { 0 }; // 파일 읽기용 빈 책
 
     int borrowCount = manageBorrowFile(borrowList, nullborrow, 0, 0); // 대출 목록 읽기
-    int bookCount = manageBookFile(booksLocal, nullbook, 0, 0);       // 책 목록 읽기
+    int bookCount = manageBookFile(booksLocal, nullbook, 0, 0); // 책 목록 읽기
 
     getDate(0); // 오늘 날짜 갱신
 
